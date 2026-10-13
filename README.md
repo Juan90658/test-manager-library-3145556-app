@@ -1,50 +1,44 @@
 # test-manager-library-3145556-app
 
-> **Prueba técnica · Ficha ADSO 3145556**
-> Entrega: **martes 13 de octubre de 2026, a las 5:00 p. m.** (17:00, hora Colombia).
+> **Technical test · ADSO 3145556** — *Manager Library* operations frontend in **React 19 + Vite**.
+> Talks only to the API contract (`/api/v1`). Screen texts are in Spanish (user-facing); code is in English.
 
-Este repositorio es el **frontend** de *Manager Library*, en **React**. **Empieza vacío a propósito**: se construye en el fork de cada aprendiz.
+## Running it
 
-## Instrucciones
+```bash
+cp .env.example .env     # VITE_API_URL=http://localhost:8000/api/v1
+npm install
+npm run dev              # http://localhost:5173
+```
 
-Cada aprendiz debe **crear el fork** de los seis repositorios del proyecto y **resolver el proyecto
-con el spec planteado**.
+With `infra`: `docker compose up --build` serves it at http://localhost:5173.
 
-1. Hacer fork, a su cuenta de GitHub, de cada repositorio de la tabla del final.
-2. Leer el spec en [`test-manager-library-3145556-docs`](https://github.com/code-sena/test-manager-library-3145556-docs).
-   Se entrega en dos versiones: `spec-python/` y `spec-.net/`.
-3. Desarrollar en los forks.
+## Screens (T-22)
 
-## El reto se desarrolla con React y PHP (Laravel)
+| Screen | Route | Role | Story |
+|---|---|---|---|
+| Login | `/ingresar` | public | HU-01 |
+| Catalog: search, category filter, pagination; create, edit, cover upload/removal, soft delete | `/libros` | all (editing: admin) | HU-03, HU-04 |
+| Members: create, search, detail with unreturned count | `/socios` | admin, librarian | HU-05 |
+| New loan: one member, 1–3 different books | `/prestar` | admin, librarian | HU-06 |
+| Loans by date range and status; return one line at a time | `/prestamos` | admin, librarian | HU-07, HU-08 |
+| Overdue lines, most days late first | `/vencidos` | admin, librarian | HU-09 |
+| Most borrowed report | `/reporte` | admin | HU-10 |
+| Create librarians | `/usuarios` | admin | HU-02 |
 
-El spec está escrito para Python y para .NET, pero el reto **no** se hace en esos lenguajes:
+Design notes:
 
-| Capa | Tecnología del reto |
-|---|---|
-| Frontend | React |
-| Backend | PHP con Laravel |
+- The server enforces every rule; the UI only guides (it disables the 4th book, hides admin actions from librarians)
+  and always shows the API's own `message` and `details`, so both share one source of truth.
+- Covers are fetched with the token through `GET /books/{id}/cover` and shown as object URLs; `cover_key` is never used as a path.
+- The ISBN field is disabled when editing: `PUT /books/{id}` does not change it.
+- A 401 from any call clears the session and returns to login (expired 8-hour token).
 
-Lo que el spec define sobre el negocio —historias, criterios de aceptación, reglas, contrato de la
-API, modelo de datos— se respeta. Lo que define sobre la tecnología se traduce a React y Laravel.
+## End-to-end walkthrough
 
-## La prueba no consiste en escribir el código
-
-El propósito principal es ver la **capacidad de desempeño con SDD** (*Spec-Driven Development*,
-desarrollo guiado por especificación): cómo se lee, se interpreta y se aplica una especificación
-para llevarla a un stack distinto. El código es el medio, no el fin.
-
-## Entrega
-
-Cuenta lo que quede **subido a los forks antes de las 5:00 p. m.** (17:00). Lo que llegue después no se revisa.
-No hay prórroga: suban avances parciales con commits pequeños durante la prueba.
-
-## Los seis repositorios
-
-| Repositorio | Qué va ahí |
-|---|---|
-| [`test-manager-library-3145556-docs`](https://github.com/code-sena/test-manager-library-3145556-docs) | El spec: `spec-python/` y `spec-.net/` |
-| [`test-manager-library-3145556-api`](https://github.com/code-sena/test-manager-library-3145556-api) | Backend en PHP (Laravel) |
-| [`test-manager-library-3145556-app`](https://github.com/code-sena/test-manager-library-3145556-app) | Frontend en React |
-| [`test-manager-library-3145556-page`](https://github.com/code-sena/test-manager-library-3145556-page) | Sitio público estático de presentación |
-| [`test-manager-library-3145556-infra`](https://github.com/code-sena/test-manager-library-3145556-infra) | Contenedores, red, volúmenes y motor de base de datos vacío |
-| [`test-manager-library-3145556-tool`](https://github.com/code-sena/test-manager-library-3145556-tool) | Utilidades: sembrador de datos de demostración |
+1. Log in as admin → create a librarian in *Bibliotecarios*.
+2. *Catálogo* → create a book with 1 copy, upload a PNG cover.
+3. *Socios* → register a member.
+4. *Prestar* → lend the book; available copies drop to 0.
+5. *Préstamos* → return the line; the loan shows *Cerrado*.
+6. *Reporte* → today's range lists the book.
